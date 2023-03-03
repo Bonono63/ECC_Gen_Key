@@ -1,3 +1,12 @@
+/*
+	Code written by Diego Noria
+	Adapted from Cooper Pflaum's gen_secrets.py
+	Math by Sarah Ogden and Tony Ivanov
+
+	Example and template code for the C implementation of the
+	secp256k1 curve used on the Tiva TM4C23GXL Embedded device
+*/
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -23,6 +32,14 @@ void print256(uint64_t* num);
 void print256_bin(uint64_t* num);
 void print256_dec(uint64_t* num);
 void montgomery_ladder(uint64_t* private_key, uint64_t** R0, uint64_t** R1);
+
+uint64_t** scalar_add(uint64_t** R0, uint64_t** R1);
+uint64_t** scalar_multiplication(uint64_t** R0, uint64_t** R1);
+
+uint64_t* subtract_256();
+uint64_t* add_256();
+uint64_t* multiply_256(uint64_t* a, uint64_t* b);
+uint64_t* divide_256(uint64_t* a, uint64_t* b);
 
 int main (void)
 {
@@ -51,6 +68,10 @@ int main (void)
 
 	getRandom(k);
 
+	//public key
+	uint64_t Q[2][4] = {{0},{0}};// = K*G;
+
+/*
 	printf("k:\n");
 	print256(k);
 	printf("R0:\n");
@@ -62,8 +83,24 @@ int main (void)
 
 	printf("\nNumber of bits in Private key: %i\n", sizeof(k)*8);
 
-	//public key
-	//uint64_t Q[2][4] = K*G;
+	printf("Public key:");
+	print256(Q[0]);
+	print256(Q[1]);
+	*/
+
+	printf("Values of a and n:\n");
+	print256_bin(a);
+	print256_bin(n);
+	printf("The sum of a and n:\n");
+	print256_bin(add_256(a,n));
+
+	/*
+	uint64_t num = 0xffffffffffffffff;
+	uint8_t iterator = (num >> 64) & 1;
+	printf("%b\n", num);
+	printf("0x%016llx\n", num);
+	printf("\n\nnext iterator carry identified %i\n", iterator);
+	*/
 }
 
 // Prints the contents of the 256 bit number in hex
@@ -86,21 +123,85 @@ void montgomery_ladder(uint64_t* private_key, uint64_t** R0, uint64_t** R1)
 {
 	for (int x = 0; x < sizeof(private_key)*8 ; x++)
 	{
-		
+		/*
+		uint8_t bit;
+		(bit & private_key << 1);
+		if ( bit == 0 )
+		{
+			R1 = 
+		}
+		else 
+		{
+
+		}*/
 	}
 }
 
-void scalar_add()
+uint64_t** scalar_add(uint64_t** r0, uint64_t** r1)
+{
+	
+	if (r0[0] == 0)
+		return r1;
+	else
+	{
+		uint64_t lamb[4];
+		// (r1[1]-r0[1])/((r1[0]-r0[0]))
+		//lamb = (r1[1]-r0[1])/((r1[0]-r0[0]));
+
+		// x = int((lamb**2) - r0[0] - r1[0])
+    	// y = int(lamb*(r0[0] - x) - r0[1])
+		uint64_t x[4];
+		uint64_t y[4];
+		uint64_t result[2][4] = {x,y};
+		return result;
+	}
+}
+
+uint64_t** scalar_double(uint64_t** r)
+{
+	//lamb = int((3*(r[0]**2))/(2*r[1]))
+
+    //x = int((lamb**2) - (2*r[0]))
+    //y = int((-lamb*x) + (lamb*r[0]) - r[1])
+}
+
+uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 {
 	
 }
 
-void scalar_multiplication()
+uint64_t* add_256(uint64_t* a, uint64_t* b)
 {
+	for( int x = 0 ; x < 4 ; x++)
+	{
+		uint8_t next_iterator_carry;
+		while (b[x] != 0)
+		{
+			uint64_t carry = (a[x] & b[x]);
+			a[x] = a[x] ^ b[x];
+			b[x] = carry << 1;
+		}
+		if (((a[x] >> 64) & 1))
+		{
+			printf("next iterator carry identified%i\n", (a[x] >> 64) & 1);
+			next_iterator_carry = 1; 
+		}
+	}
 
+	return a;
+}
+/*
+uint64_t* multiply_256()
+{
+	
 }
 
-void getRandom(uint64_t* k)
+uint64_t* divide_256()
+{
+	
+}
+*/
+void getRandom(uint64_t* private_key)
 {
     FILE* random;
 
@@ -116,6 +217,6 @@ void getRandom(uint64_t* k)
 		}
 		for (int y = 0; y < 8; ++y)
     			result = (result << 8) | temp[y];
-		k[i] = result;
+		private_key[i] = result;
 	}
 }
