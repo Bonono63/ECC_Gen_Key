@@ -43,12 +43,12 @@ void getRandom(uint64_t* k);
 int main (void)
 {
 	uint64_t rand[4];
-    	FILE* random;
+    FILE* random;
 
-    	random = fopen("/dev/random", "r");
-    	for(int i = 0; i < 4 ; i++)
+    random = fopen("/dev/random", "r");
+    for(int i = 0; i < 4 ; i++)
 	{
-		uint64_t temp;
+		uint64_t result;
 		uint8_t tempa[8];
 		for (int x = 0 ; x < 8 ; x++)
     		{
@@ -59,14 +59,13 @@ int main (void)
 		}
 		for (int y = 0; y < 8; ++y)
     			temp = (temp << 8) | tempa[y];
-
-		rand[i] = temp;
+		result[i] = temp;
 	}
 
-	printf("%llu\n", rand[0]);
-	printf("%llu\n", rand[1]);
-	printf("%llu\n", rand[2]);
-	printf("%llu\n", rand[3]);
+	printf("%llu\n", result[0]);
+	printf("%llu\n", result[1]);
+	printf("%llu\n", result[2]);
+	printf("%llu\n", result[3]);
 }
 
 /*
