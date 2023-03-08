@@ -14,7 +14,7 @@
 #include <string.h>
 #include <math.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 /*
     curve: y^2 = x^3 + 7
@@ -64,8 +64,8 @@ int main (void)
 	//public key
 	uint64_t Q[2][4] = {{0},{0}};// = K*G;
 
-	printf("The sum of a and b:\n");
-	print256(add_256(a,b));
+	printf("The difference between b and a:\n");
+	print256(subtract_256(b,a));
 }
 
 // Prints the contents of the 256 bit number in hex
@@ -139,7 +139,28 @@ uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 			printf("index: %i\n",x);
 			printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
 		}
+
+		while (b[x] != 0)
+		{
+			uint64_t borrow = ((~a[x]) & b[x]);
+			a[x] = a[x] ^ b[x];
+			b[x] = borrow << 1;
+
+			if (((borrow >> (uint64_t)63) & 1) == 1)
+			{
+				if (x != 0)
+				{
+					printf("borrowing from the next index\n");
+					a[x-1] -= 1;
+				}
+				else
+				{
+					// need to return an overflow essentially
+				}
+			}
+		}
 	}
+	return a;
 }
 
 uint64_t* add_256(uint64_t* a, uint64_t* b)
