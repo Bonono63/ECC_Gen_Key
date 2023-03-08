@@ -1,5 +1,6 @@
 /*
-	Code written by Diego Noria
+	Programmed with blood, sweat, and tears by Diego Noria
+
 	Adapted from Cooper Pflaum's gen_secrets.py
 	Math by Sarah Ogden and Tony Ivanov
 
@@ -13,15 +14,7 @@
 #include <string.h>
 #include <math.h>
 
-/*
-#define getuint256_t(d7, d6, d5, d4, d3, d2, d1) \
-{{ \
-	(d0) | (((uint64_t)(d1)) << 32),\
-	(d2) | (((uint64_t)(d3)) << 32),\
-	(d4) | (((uint64_t)(d5)) << 32),\
-	(d6) | (((uint64_t)(d7)) << 32)\
-}}/
-*/
+#define DEBUG 0
 
 /*
     curve: y^2 = x^3 + 7
@@ -48,8 +41,8 @@ int main (void)
 
 	// constants used in the secp256k1 curve
 	const uint64_t p[4] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFC2F};
-	const uint64_t a[4] = {0x0000000000000000, 0x0000000000000000, 0x000000000000000F, 0xF000000000000001};
-	const uint64_t b[4] = {0x0000000000000000, 0x0000000000000000, 0x0000000000000010, 0xF000000000000007};
+	const uint64_t a[4] = {0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000001};
+	const uint64_t b[4] = {0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000007};
 	
 	//Maximum number of possible points on the Elyptical Curve
 	const uint64_t n[4] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFE, 0xBAAEDCE6AF48A03B, 0xBFD25E8CD0364141};
@@ -72,14 +65,12 @@ int main (void)
 	uint64_t Q[2][4] = {{0},{0}};// = K*G;
 
 	printf("The sum of a and b:\n");
-	add_256(a,b);
+	print256(add_256(a,b));
 }
 
 // Prints the contents of the 256 bit number in hex
 void print256(uint64_t* num)
 {
-	printf("         1111111111222222\n");
-	printf("1234567890123456789012345\n");
 	printf("0x%016llx%016llx%016llx%016llx\n", num[0], num[1], num[2], num[3]);
 }
 // Prints the contents of the 256 bit number in binary
@@ -141,41 +132,50 @@ uint64_t** scalar_double(uint64_t** r)
 
 uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 {
-	
+	for (int x = 3 ; x > -1 ; x--)
+	{
+		if (DEBUG)
+		{
+			printf("index: %i\n",x);
+			printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
+		}
+	}
 }
 
 uint64_t* add_256(uint64_t* a, uint64_t* b)
 {
 	for(int x = 3 ; x > -1 ; x--)
 	{
-		printf("index: %i\n",x);
-		printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
+		if (DEBUG)
+		{
+			printf("index: %i\n",x);
+			printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
+		}
+
+		//addition loop
 		while (b[x] != 0)
 		{
+			// basic implementation of bitwise addition
 			uint64_t carry = (a[x] & b[x]);
 			a[x] = a[x] ^ b[x];
 			b[x] = carry << 1;
-			printf("add to the next index?: %d\n", (carry >> 63) & 1);
-			if (((carry >> 63) & 1) == 1)
+			//checks to see whether there is a on bit in the highest most bit of the current index
+			//if there is it makes sure it isn't the highest most index before adding 1 to the next
+			//index thus allowing for the addition to properly treat the function just like a 256 bit
+			//number instead of a the botched representation that it is
+			if (((carry >> (uint64_t)63) & 1) == 1)
 			{
-				if (x == 0)
+				if (x != 0)
 				{
-					printf("index is 3\n");
-					for (int i = 0; i < 4; i ++)
-					{
-						a[i] = 0;
-					}
+					a[x-1] += 1;
 				}
 				else
 				{
-					printf("a[x+1] + 1\n");
-					a[x-1] += 1;
+					// need to return an overflow essentially
 				}
 			}
 		}
 	}
-	printf("\nreturn: \n");
-	print256(a);
 	return a;
 }
 /*
