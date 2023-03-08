@@ -48,8 +48,8 @@ int main (void)
 
 	// constants used in the secp256k1 curve
 	const uint64_t p[4] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFC2F};
-	const uint64_t a[4] = {0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0xF000000000000001};
-	const uint64_t b[4] = {0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x1000000000000007};
+	const uint64_t a[4] = {0x100000000000000F, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000};
+	const uint64_t b[4] = {0x7000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000};
 	
 	//Maximum number of possible points on the Elyptical Curve
 	const uint64_t n[4] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFE, 0xBAAEDCE6AF48A03B, 0xBFD25E8CD0364141};
@@ -92,7 +92,8 @@ int main (void)
 	print256(a);
 	print256(b);
 	printf("The sum of a and b:\n");
-	print256(add_256(a,b));
+	//print256(add_256(a,b));
+	add_256(a,b);
 
 	/*
 	uint64_t num = 0xffffffffffffffff;
@@ -106,6 +107,8 @@ int main (void)
 // Prints the contents of the 256 bit number in hex
 void print256(uint64_t* num)
 {
+	printf("         1111111111222222");
+	printf("1234567890123456789012345");
 	printf("0x%016llx%016llx%016llx%016llx\n", num[0], num[1], num[2], num[3]);
 }
 // Prints the contents of the 256 bit number in binary
@@ -172,38 +175,32 @@ uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 
 uint64_t* add_256(uint64_t* a, uint64_t* b)
 {
-	for(int x = 0 ; x < 4 ; x++)
+	for(uint8_t x = 0 ; x < 4 ; x++)
 	{
-		//uint8_t next_iterator_carry;
+		printf("index: %i\n",x);
 		while (b[x] != 0)
 		{
 			uint64_t carry = (a[x] & b[x]);
 			a[x] = a[x] ^ b[x];
-			b[x] = carry << 1;
-			printf("index: %i, value: %i\n",x,carry >> 64);
-			printf("%b\n",a[x]);
+			b[x] = carry << 1;/*
 			if ((carry >> 63) == 1)
 			{
 				if (x == 4)
 				{
 					for (int i = 0; i < 4; i ++)
 					{
-						b[i] = 0;
+						a[i] = 0;
 					}
 				}
 				else
 				{
-					b[x+1] + 1;
+					a[x+1] + 1;
 				}
-			}
-		}/*
-		if (((a[x] >> 64) & 1))
-		{
-			printf("next iterator carry identified%i\n", (a[x] >> 63) & 1);
-			//next_iterator_carry = 1; 
-		}*/
+			}*/
+		}
 	}
-
+	printf("return: ");
+	print256(a);
 	return a;
 }
 /*
