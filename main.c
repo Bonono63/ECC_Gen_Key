@@ -48,8 +48,8 @@ int main (void)
 
 	// constants used in the secp256k1 curve
 	const uint64_t p[4] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFEFFFFFC2F};
-	const uint64_t a[4] = {0x100000000000000F, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000};
-	const uint64_t b[4] = {0x7000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000};
+	const uint64_t a[4] = {0x0000000000000000, 0x0000000000000000, 0x000000000000000F, 0xF000000000000001};
+	const uint64_t b[4] = {0x0000000000000000, 0x0000000000000000, 0x0000000000000010, 0xF000000000000007};
 	
 	//Maximum number of possible points on the Elyptical Curve
 	const uint64_t n[4] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFE, 0xBAAEDCE6AF48A03B, 0xBFD25E8CD0364141};
@@ -71,44 +71,15 @@ int main (void)
 	//public key
 	uint64_t Q[2][4] = {{0},{0}};// = K*G;
 
-/*
-	printf("k:\n");
-	print256(k);
-	printf("R0:\n");
-	print256(R0[0]);
-	print256(R0[1]);
-	printf("R1:\n");
-	print256(R1[0]);
-	print256(R1[1]);
-
-	printf("\nNumber of bits in Private key: %i\n", sizeof(k)*8);
-
-	printf("Public key:");
-	print256(Q[0]);
-	print256(Q[1]);
-	*/
-
-	printf("Values of a and b:\n");
-	print256(a);
-	print256(b);
 	printf("The sum of a and b:\n");
-	//print256(add_256(a,b));
 	add_256(a,b);
-
-	/*
-	uint64_t num = 0xffffffffffffffff;
-	uint8_t iterator = (num >> 64) & 1;
-	printf("%b\n", num);
-	printf("0x%016llx\n", num);
-	printf("\n\nnext iterator carry identified %i\n", iterator);
-	*/
 }
 
 // Prints the contents of the 256 bit number in hex
 void print256(uint64_t* num)
 {
-	printf("         1111111111222222");
-	printf("1234567890123456789012345");
+	printf("         1111111111222222\n");
+	printf("1234567890123456789012345\n");
 	printf("0x%016llx%016llx%016llx%016llx\n", num[0], num[1], num[2], num[3]);
 }
 // Prints the contents of the 256 bit number in binary
@@ -175,18 +146,21 @@ uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 
 uint64_t* add_256(uint64_t* a, uint64_t* b)
 {
-	for(uint8_t x = 0 ; x < 4 ; x++)
+	for(int x = 3 ; x > -1 ; x--)
 	{
 		printf("index: %i\n",x);
+		printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
 		while (b[x] != 0)
 		{
 			uint64_t carry = (a[x] & b[x]);
 			a[x] = a[x] ^ b[x];
-			b[x] = carry << 1;/*
-			if ((carry >> 63) == 1)
+			b[x] = carry << 1;
+			printf("add to the next index?: %d\n", (carry >> 63) & 1);
+			if (((carry >> 63) & 1) == 1)
 			{
-				if (x == 4)
+				if (x == 0)
 				{
+					printf("index is 3\n");
 					for (int i = 0; i < 4; i ++)
 					{
 						a[i] = 0;
@@ -194,12 +168,13 @@ uint64_t* add_256(uint64_t* a, uint64_t* b)
 				}
 				else
 				{
-					a[x+1] + 1;
+					printf("a[x+1] + 1\n");
+					a[x-1] += 1;
 				}
-			}*/
+			}
 		}
 	}
-	printf("return: ");
+	printf("\nreturn: \n");
 	print256(a);
 	return a;
 }
