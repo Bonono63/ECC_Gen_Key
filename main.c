@@ -14,7 +14,7 @@
 #include <string.h>
 #include <math.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 /*
     curve: y^2 = x^3 + 7
@@ -42,14 +42,16 @@ void getRandom(uint64_t* k);
 uint64_t** scalar_add(uint64_t** R0, uint64_t** R1);
 uint64_t** scalar_multiplication(uint64_t** R0, uint64_t** R1);
 
-uint64_t* subtract_256(uint64_t* a, uint64_t* b);
 uint64_t* add_256(uint64_t* a, uint64_t* b);
+uint64_t* subtract_256(uint64_t* a, uint64_t* b);
 uint64_t* multiply_256(uint64_t* a, uint64_t* b);
 uint64_t* divide_256(uint64_t* a, uint64_t* b);
+uint64_t* modulo_256(uint64_t* a, uint64_t* b);
 
+int greater_than_256(uint64_t* a, uint64_t* b);
 int equal_to_256(uint64_t* a, uint64_t* b);
 
-const uint64_t ZERO[5] = {0x0,0x0,0x0,0x0,0x0};
+uint64_t ZERO[5] = {0x0,0x0,0x0,0x0,0x0};
 
 int main (void)
 {
@@ -81,21 +83,22 @@ int main (void)
 	//public key
 	uint64_t Q[2][5] = {{0},{0}};// = K*G;
 
-	printf("The difference between b and a:\n");
-	print256(add_256(b,a));
+	uint64_t d[5] = {0,0,0,0,7};
+	uint64_t f[5] = {0,0,0,0,12};
+
+	printf("The difference between d and f: \n");
+	print256(subtract_256(d,f));
 }
 
-uint8_t return_sign(uint64_t* num)
-{
-	if (num[0]==0x0)
-		return '+';
-	else
-		return '-';
-}
 // Prints the contents of the 256 bit number in hex
 void print256(uint64_t* num)
 {
-	printf("%c0x%016llx%016llx%016llx%016llx\n", return_sign(num), num[1], num[2], num[3], num[4]);
+	uint8_t sign;
+	if (num[0]==0x0)
+		sign = '+';
+	else
+		sign = '-';
+	printf("%c0x%016llx%016llx%016llx%016llx\n", sign, num[1], num[2], num[3], num[4]);
 }
 // Prints the contents of the 256 bit number in binary
 void print256_bin(uint64_t* num)
@@ -107,12 +110,12 @@ void print256_dec(uint64_t* num)
 {
 	printf("%llu%llu%llu%llu\n", num[0], num[1], num[2], num[3]);
 }
-
+/*
 void montgomery_ladder(uint64_t* private_key, uint64_t** R0, uint64_t** R1)
 {
 	for (int x = 0; x < sizeof(private_key)*8 ; x++)
 	{
-		/*
+		
 		uint8_t bit;
 		(bit & private_key << 1);
 		if ( bit == 0 )
@@ -122,7 +125,7 @@ void montgomery_ladder(uint64_t* private_key, uint64_t** R0, uint64_t** R1)
 		else 
 		{
 
-		}*/
+		}
 	}
 }
 
@@ -153,37 +156,50 @@ uint64_t** scalar_double(uint64_t** r)
     //x = int((lamb**2) - (2*r[0]))
     //y = int((-lamb*x) + (lamb*r[0]) - r[1])
 }
-
+*/
 uint64_t* add_256(uint64_t* a, uint64_t* b)
 {
-	for(int x = 4 ; x > 0 ; x--)
+	if (a[0] == 1 && b[0] == 0 )
 	{
-		if (DEBUG)
+		a[0] = 0;
+		a = subtract_256(a,b);
+	}
+	else if (a[0] == 0 && b[0] == 1)
+	{
+		b[0] = 0;
+		a = subtract_256(a,b);
+	}
+	else
+	{
+		for(int x = 4 ; x > 0 ; x--)
 		{
-			printf("index: %i\n",x);
-			printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
-		}
-
-		//addition loop
-		while (b[x] != 0)
-		{
-			// basic implementation of bitwise addition
-			uint64_t carry = (a[x] & b[x]);
-			a[x] = a[x] ^ b[x];
-			b[x] = carry << 1;
-			//checks to see whether there is a on bit in the highest most bit of the current index
-			//if there is it makes sure it isn't the highest most index before adding 1 to the next
-			//index thus allowing for the addition to properly treat the function just like a 256 bit
-			//number instead of a the botched representation that it is
-			if (((carry >> (uint64_t)63) & 1) == 1)
+			if (DEBUG)
 			{
-				if (x != 0)
+				printf("index: %i\n",x);
+				printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
+			}
+
+			//addition loop
+			while (b[x] != 0)
+			{
+				// basic implementation of bitwise addition
+				uint64_t carry = (a[x] & b[x]);
+				a[x] = a[x] ^ b[x];
+				b[x] = carry << 1;
+				//checks to see whether there is a on bit in the highest most bit of the current index
+				//if there is it makes sure it isn't the highest most index before adding 1 to the next
+				//index thus allowing for the addition to properly treat the function just like a 256 bit
+				//number instead of a the botched representation that it is
+				if (((carry >> (uint64_t)63) & 1) == 1)
 				{
-					a[x-1] += 1;
-				}
-				else
-				{
-					a = ZERO;
+					if (x != 0)
+					{
+						a[x-1] += 1;
+					}
+					else
+					{
+						a = ZERO;
+					}
 				}
 			}
 		}
@@ -193,19 +209,26 @@ uint64_t* add_256(uint64_t* a, uint64_t* b)
 
 uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 {
-	if (a[4] == 1 && b[4] == 0)
+	if (a[0] == 1 && b[0] == 0)
 	{
-		a[4] = 0;
+		a[0] = 0;
 		a = add_256(a,b);
-		a[4] = 1;
+		a[0] = 1;
 	}
-	else if (a[4] == 0 && b[4] == 1)
+	else if (a[0] == 0 && b[0] == 1)
 	{
-		b[4] == 0;
+		b[0] == 0;
 		a = add_256(a,b);
 	}
-	else if ((a[4] == 1 && b[4] == 1) || (a[4] == 0 && b[4] == 0))
+	else if ((a[0] == 1 && b[0] == 1) || (a[0] == 0 && b[0] == 0))
 	{
+		if (!greater_than_256(a,b))
+		{
+			uint64_t* temp=a;
+			a = b;
+			b = temp;
+			a[0] = 1;
+		}
 		for (int x = 4 ; x > 0 ; x--)
 		{
 
@@ -235,21 +258,6 @@ uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 						a = ZERO;
 					}
 				}
-
-				//NO NEGATIVE RESULT PLEASE 
-				/*
-				if (((borrow >> (uint64_t)63) & 1) == 1)
-				{
-					if (x != 0)
-					{
-						printf("borrowing from the next index\n");
-						a[x-1] -= 1;
-					}
-					else
-					{
-							a = ZERO;
-					}
-				}*/
 			}
 		}
 	}
@@ -260,7 +268,7 @@ uint64_t* multiply_256(uint64_t* a, uint64_t* b)
 {
 	for (int x = 3 ; x > -1 ; x--)
 	{
-		if (equal_to_256(b[x],ZERO))
+		if (equal_to_256(b,ZERO))
 		{
 			return ZERO;
 		}
@@ -275,12 +283,32 @@ uint64_t* divide_256()
 {
 	
 }
+*/
 
-int greater_than_256()
+// a > b //
+int greater_than_256(uint64_t* a, uint64_t* b)
 {
+	if (a[0] == 1 && b[0] == 0)
+	{
+		if (DEBUG) {printf("first number is negative, the second is positive, returning false\n");}
+		return 0;
+	}
+	else if (a[0] == 0 && b[0] == 1)
+	{
+		if (DEBUG) {printf("first number is positive, the second is negative, returning true\n");}
+		return 1;
+	}
+	else
+	{
+		if (DEBUG) {printf("first number is positive and the second is positive, running the math\n");}
 
+		for(int i = 1; i < 5 ; i++)	{if (a[i] > b[i]) {return 1;}}
+		return 0;
+	}
 }
 
+/*
+// a < b //
 int less_than_256()
 {
 
@@ -289,20 +317,16 @@ int less_than_256()
 
 int equal_to_256(uint64_t* a, uint64_t* b)
 {
-	int result[4];
-	int final_bool = 0;
+	int result = 1;
 
-	if (a[3] == b[3]) { result[3] = 1; }
-	if (a[2] == b[2]) { result[2] = 1; }
-	if (a[1] == b[1]) { result[1] = 1; }
-	if (a[0] == b[0]) { result[0] = 1; }
-
-	for(int x = 0 ; x < 3 ; x++)
+	for (int x = 0; x <= 4 ; x++)
 	{
-		if (result[x] == 1)
-			final_bool = 1;
+		if (DEBUG) {printf("index: %i value:%016llx,%016llx",x,a[x],b[x]);}
+		if (a[x] != b[x] || b[x] != a[x])
+			result = 0;
 	}
-	return final_bool;
+
+	return result;
 }
 
 void getRandom(uint64_t* private_key)
@@ -310,15 +334,12 @@ void getRandom(uint64_t* private_key)
     FILE* random;
 
     random = fopen("/dev/random", "r");
-    for(int i = 0; i < 4 ; i++)
+    for(int i = 3; i > 0 ; i--)
 	{
 		uint64_t result;
 		uint8_t temp[8];
 		for (int x = 0 ; x < sizeof(temp) ; x++)
-    	{
         	fgets(temp,sizeof(temp),random);
-        	//printf("%b\n",*temp);
-		}
 		for (int y = 0; y < 8; ++y)
     			result = (result << 8) | temp[y];
 		private_key[i] = result;
