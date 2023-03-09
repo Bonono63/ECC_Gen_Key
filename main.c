@@ -83,11 +83,13 @@ int main (void)
 	//public key
 	uint64_t Q[2][5] = {{0},{0}};// = K*G;
 
-	uint64_t d[5] = {0,0,0,0,7};
-	uint64_t f[5] = {0,0,0,0,12};
+	printf("amongus\n");
 
-	printf("The difference between d and f: \n");
-	print256(subtract_256(d,f));
+	uint64_t d[5] = {0,0,0,0,1};
+	uint64_t f[5] = {0,0,0,0,1};
+	uint64_t* result;
+	result = multiply_256(d,f);
+	//print256(result);
 }
 
 // Prints the contents of the 256 bit number in hex
@@ -266,17 +268,24 @@ uint64_t* subtract_256(uint64_t* a, uint64_t* b)
 
 uint64_t* multiply_256(uint64_t* a, uint64_t* b)
 {
-	for (int x = 3 ; x > -1 ; x--)
-	{
-		if (equal_to_256(b,ZERO))
-		{
-			return ZERO;
-		}
-		else
-		{
+	printf("awdasd\n");
 
+	uint64_t result[5] = {0,0,0,0,0};
+
+	for (int x = 4 ; x > 0 ; x--)
+	{
+		printf("index: %i\n",x);
+		while(b[x] > 0)
+		{
+			printf("while\n");
+			if (b[x] & 1)
+				result[x] = result[x] + a[x];
+			a[x] = a[x] << 1;
+			b[x] = b[x] >> 1;
 		}
 	}
+
+	return result;
 }
 /*
 uint64_t* divide_256()
