@@ -31,14 +31,8 @@
 // TODO in the final product we need to move these to a header file so they
 // can be reused through out the code base
 void print256(uint8_t* num);
-void print256_bin(uint8_t* num);
-void print256_dec(uint8_t* num);
 
-void montgomery_ladder(uint8_t* private_key, uint8_t** R0, uint8_t** R1);
 void getRandom(uint8_t* k);
-
-uint8_t** scalar_add(uint8_t** R0, uint8_t** R1);
-uint8_t** scalar_multiplication(uint8_t** R0, uint8_t** R1);
 
 uint8_t* add_256(uint8_t* a, uint8_t* b);
 uint8_t* subtract_256(uint8_t* a, uint8_t* b);
@@ -49,45 +43,27 @@ uint8_t* modulo_256(uint8_t* a, uint8_t* b);
 int greater_than_256(uint8_t* a, uint8_t* b);
 int equal_to_256(uint8_t* a, uint8_t* b);
 
-uint8_t ZERO[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
+//uint8_t ZERO[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+#define ZERO "{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}"
 int main (void)
 {
 	// k is the private key
 	uint8_t k[33];
 
-	// constants used in the secp256k1 curve
-	const uint8_t p[33] = {0,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xE,0xF,0xF,0xF,0xF,0xF,0xC,0x2,0xF};
-	const uint8_t a[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1};
-	const uint8_t b[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7};
-	
 	//Maximum number of possible points on the Elyptical Curve
-	const uint8_t n[33] = {0,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xE,0xB,0xA,0xA,0xE,0xD,0xC,0xE,0x6,0xA,0xF,0x4,0x8,0xA,0x0,0x3,0xB,0xB,0xF,0xD,0x2,0x5,0xE,0x8,0xC,0xD,0x0,0x3,0x6,0x4,0x1,0x4,0x1};
+	//const uint8_t n[33] = {0,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xE,0xB,0xA,0xA,0xE,0xD,0xC,0xE,0x6,0xA,0xF,0x4,0x8,0xA,0x0,0x3,0xB,0xB,0xF,0xD,0x2,0x5,0xE,0x8,0xC,0xD,0x0,0x3,0x6,0x4,0x1,0x4,0x1};
 
 	/* base point for the curve
 		0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798, 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
 	*/
-	const uint8_t G[2][33] = {{0x0, 0x79BE667EF9DCBBAC, 0x55A06295CE870B07, 0x029BFCDB2DCE28D9, 0x59F2815B16F81798},{0x0, 0x483ada7726a3c465, 0x5da4fbfc0e1108a8, 0xfd17b448a6855419, 0x9c47d08ffb10d4b8}};
-	
-	// set R0 to 0 (otherwise there can be left over bytes in the same space)
-	uint8_t R0[2][5] = {{0},{0}};
-	uint8_t R1[2][5];
+	uint8_t G[2][33] = {{0x0,0x79,0xBE,0x66,0x7E,0xF9,0xDC,0xBB,0xAC,0x55,0xA0,0x62,0x95,0xCE,0x87,0x0B,0x07,0x02,0x9B,0xFC,0xDB,0x2D,0xCE,0x28,0xD9,0x59,0xF2,0x81,0x5B,0x16,0xF8,0x17,0x98},{0x0,0x48,0x3a,0xda,0x77,0x26,0xa3,0xc4,0x65,0x5d,0xa4,0xfb,0xfc,0x0e,0x11,0x08,0xa8,0xfd,0x17,0xb4,0x48,0xa6,0x85,0x54,0x19,0x9c,0x47,0xd0,0x8f,0xfb,0x10,0xd4,0xb8}};
 
-	// copy the base point to R1
-	memcpy(&R1, &G, sizeof(G));
+	uint8_t a[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3};
+	a[32] += 3;
 
-	getRandom(k);
-
-	//public key
-	uint8_t Q[2][5] = {{0},{0}};// = K*G;
-
-	printf("amongus\n");
-
-	uint8_t d[5] = {0,0,0,0,0xff00000000000000};
-	uint8_t f[5] = {0,0,0,0,8};
-	uint8_t* result;
-	result = multiply_256(d,f);
-	//print256(result);
+	print256(G[0]);
+	print256(a);
+	print256(multiply_256(G[0],a));
 }
 
 // Prints the contents of the 256 bit number in hex
@@ -98,70 +74,14 @@ void print256(uint8_t* num)
 		sign = '+';
 	else
 		sign = '-';
-	printf("%c0x%016llx%016llx%016llx%016llx\n", sign, num[1], num[2], num[3], num[4]);
-}
-// Prints the contents of the 256 bit number in binary
-void print256_bin(uint8_t* num)
-{
-	uint8_t sign;
-	if (num[0]==0x0)
-		sign = '+';
-	else
-		sign = '-';
-	printf("%c%b%b%b%b\n",sign, num[1], num[2], num[3], num[4]);
-}
-// Prints the contents of the 256 bit number in decimal
-void print256_dec(uint8_t* num)
-{
-	printf("%llu%llu%llu%llu\n", num[0], num[1], num[2], num[3]);
-}
-/*
-void montgomery_ladder(uint8_t* private_key, uint8_t** R0, uint8_t** R1)
-{
-	for (int x = 0; x < sizeof(private_key)*8 ; x++)
+	printf("%c0x",sign);
+	for (int x = 1 ; x < 33 ; x++)
 	{
-		
-		uint8_t bit;
-		(bit & private_key << 1);
-		if ( bit == 0 )
-		{
-			R1 = 
-		}
-		else 
-		{
-
-		}
+		printf("%02x",num[x]);
 	}
+	printf("\n");
 }
 
-uint8_t** scalar_add(uint8_t** r0, uint8_t** r1)
-{
-	
-	if (r0[0] == 0)
-		return r1;
-	else
-	{
-		uint8_t lamb[4];
-		// (r1[1]-r0[1])/((r1[0]-r0[0]))
-		//lamb = (r1[1]-r0[1])/((r1[0]-r0[0]));
-
-		// x = int((lamb**2) - r0[0] - r1[0])
-    	// y = int(lamb*(r0[0] - x) - r0[1])
-		uint8_t x[4];
-		uint8_t y[4];
-		uint8_t result[2][4] = {x,y};
-		return result;
-	}
-}
-
-uint8_t** scalar_double(uint8_t** r)
-{
-	//lamb = int((3*(r[0]**2))/(2*r[1]))
-
-    //x = int((lamb**2) - (2*r[0]))
-    //y = int((-lamb*x) + (lamb*r[0]) - r[1])
-}
-*/
 uint8_t* add_256(uint8_t* a, uint8_t* b)
 {
 	if (a[0] == 1 && b[0] == 0 )
@@ -176,12 +96,12 @@ uint8_t* add_256(uint8_t* a, uint8_t* b)
 	}
 	else
 	{
-		for(int x = 4 ; x > 0 ; x--)
+		for(int x = 32 ; x > 0 ; x--)
 		{
 			if (DEBUG)
 			{
 				printf("index: %i\n",x);
-				printf("contents:\na[%i]:%016llx\nb[%i]:%016llx\n",x,a[x],x,b[x]);
+				printf("contents:\na[%i]:%02x\nb[%i]:%02x\n",x,a[x],x,b[x]);
 			}
 
 			//addition loop
@@ -195,7 +115,7 @@ uint8_t* add_256(uint8_t* a, uint8_t* b)
 				//if there is it makes sure it isn't the highest most index before adding 1 to the next
 				//index thus allowing for the addition to properly treat the function just like a 256 bit
 				//number instead of a the botched representation that it is
-				if (((carry >> (uint8_t)63) & 1) == 1)
+				if (((carry >> (uint8_t)7) & 1) == 1)
 				{
 					if (x > 1)
 					{
@@ -234,7 +154,7 @@ uint8_t* subtract_256(uint8_t* a, uint8_t* b)
 			b = temp;
 			a[0] = 1;
 		}
-		for (int x = 4 ; x > 0 ; x--)
+		for (int x = 32 ; x > 0 ; x--)
 		{
 
 			// TODO handle negative results
@@ -251,7 +171,7 @@ uint8_t* subtract_256(uint8_t* a, uint8_t* b)
 				a[x] = a[x] ^ b[x];
 				b[x] = borrow << 1;
 
-				if (((borrow >> (uint8_t)63) & 1) == 1)
+				if (((borrow >> (uint8_t)7) & 1) == 1)
 				{
 					if (x > 1)
 					{
@@ -274,36 +194,36 @@ uint8_t* multiply_256(uint8_t* a, uint8_t* b)
 	//printf("awdasd\n");
 
 	uint8_t* result;
-	result = (uint8_t*)malloc(5*sizeof(uint8_t));
+	result = (uint8_t*) malloc(33*sizeof(uint8_t));
+
 
 	// set the numbers temporarily to positive even if they are negative to ensure
 	// the addition works and then make the result negative or positive depending
 	// on the input
 
-	for (int x = 1 ; x < 5 ; x++)
+	a[0] = 0;
+	b[0] = 0;
+	for (int x = 1 ; x < 34 ; x++)
 	{
-		printf("index: %i\n",x);
-		printf("a: ");
-		print256_bin(a);
-		printf("b: ");
-		print256_bin(b);
+		//printf("index: %i\n",x);
+		//printf("a: ");
+		//print256(a);
+		//printf("b: ");
+		//print256(b);
 		while(b[x] > 0)
 		{
-			if (b[x] & 1){
-				result = add_256(result,a);
-				printf("result:\n");
-				print256_bin(result);
-			}
-			printf("a: %b\n",a[x]);
-			printf("b: %b\n",b[x]);
-			a[x] = a[x] << 1;
-			b[x] = b[x] >> 1;
+			result = add_256(a,result);
+			//printf("result:\n");
+			//print256(result);
+			
+			//printf("b: %i\n",b[x]);
+			b[x]--;
 		}
+		print256(result);
 	}
-	print256(result);
-	a = result;
-	free(result);
-	return a;
+	//memcpy(&a,&result,33*sizeof(uint8_t));
+	print256(b);
+	return result;
 }
 /*
 uint8_t* divide_256()
