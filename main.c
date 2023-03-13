@@ -196,6 +196,11 @@ uint8_t* multiply_256(uint8_t* a, uint8_t* b)
 	uint8_t* result;
 	result = (uint8_t*) malloc(33*sizeof(uint8_t));
 
+	
+	for (int x = 0 ; x < 33 ; x++)
+	{
+		result[x] = 0;
+	}
 
 	// set the numbers temporarily to positive even if they are negative to ensure
 	// the addition works and then make the result negative or positive depending
@@ -203,26 +208,16 @@ uint8_t* multiply_256(uint8_t* a, uint8_t* b)
 
 	a[0] = 0;
 	b[0] = 0;
-	for (int x = 1 ; x < 34 ; x++)
+	for (int x = 33 ; x < 0 ; x--)
 	{
-		//printf("index: %i\n",x);
-		//printf("a: ");
-		//print256(a);
-		//printf("b: ");
-		//print256(b);
-		while(b[x] > 0)
+		for(int i = 1; i<=b[x] ; i++)
 		{
-			result = add_256(a,result);
-			//printf("result:\n");
-			//print256(result);
-			
-			//printf("b: %i\n",b[x]);
-			b[x]--;
+			printf("%i\n",b[x]);
+			result = add_256(result,a);
+			print256(result);
 		}
-		print256(result);
 	}
-	//memcpy(&a,&result,33*sizeof(uint8_t));
-	print256(b);
+	//prinqt256(b);
 	return result;
 }
 /*
