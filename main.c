@@ -31,17 +31,22 @@
 // TODO in the final product we need to move these to a header file so they
 // can be reused through out the code base
 void print256(uint8_t* num);
+void print512(uint8_t* num);
 
 void getRandom(uint8_t* k);
 
 uint8_t* add_256(uint8_t* a, uint8_t* b);
 uint8_t* subtract_256(uint8_t* a, uint8_t* b);
-uint8_t* multiply_256(uint8_t* a, uint8_t* b);
+void multiply_256(uint8_t* a, uint8_t* b, uint8_t** result);
 uint8_t* divide_256(uint8_t* a, uint8_t* b);
 uint8_t* modulo_256(uint8_t* a, uint8_t* b);
+void copy(uint8_t* a,uint8_t* b);
+void bit_shift_left_256(uint8_t** a, int shift);
 
 int greater_than_256(uint8_t* a, uint8_t* b);
 int equal_to_256(uint8_t* a, uint8_t* b);
+
+void multiply(uint64_t a, uint64_t b, uint64_t *result);
 
 //uint8_t ZERO[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #define ZERO "{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}"
@@ -59,14 +64,63 @@ int main (void)
 	uint8_t G[2][33] = {{0x0,0x79,0xBE,0x66,0x7E,0xF9,0xDC,0xBB,0xAC,0x55,0xA0,0x62,0x95,0xCE,0x87,0x0B,0x07,0x02,0x9B,0xFC,0xDB,0x2D,0xCE,0x28,0xD9,0x59,0xF2,0x81,0x5B,0x16,0xF8,0x17,0x98},{0x0,0x48,0x3a,0xda,0x77,0x26,0xa3,0xc4,0x65,0x5d,0xa4,0xfb,0xfc,0x0e,0x11,0x08,0xa8,0xfd,0x17,0xb4,0x48,0xa6,0x85,0x54,0x19,0x9c,0x47,0xd0,0x8f,0xfb,0x10,0xd4,0xb8}};
 
 	uint8_t a[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3};
-	a[32] += 3;
+	uint8_t b[33] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-	print256(G[0]);
+	printf("a:  ");
 	print256(a);
-	print256(multiply_256(G[0],a));
+	printf("b:  ");
+	print256(b);
+
+	bit_shift_left_256(&a,1);
+	//print256(a);
+
+
+    //uint8_t* result;
+    //multiply_256(a, b, &result);
+	//print512(result);
+    return 0;
 }
 
-// Prints the contents of the 256 bit number in hex
+void multiply(uint64_t a, uint64_t b, uint64_t *result)
+{
+    // Initialize the result to zero
+    *result = 0;
+
+    // Perform the multiplication using bitwise operations
+    for (int i = 0; i < 64; i++) {
+        if ((b >> i) & 1) {
+            *result += (a << i);
+        }
+    }
+}
+
+void multiply_256(uint8_t* a, uint8_t* b, uint8_t** result)
+{
+	*result = (uint8_t*) calloc(33, sizeof(uint8_t));
+
+	printf("anuwa");
+
+	for (int x = 1 ; x < 34 ; x++)
+	{
+		for (int i = 0 ; i < 8 ; i++) {
+    	    if ((b[x] >> i) & 1) {
+				bit_shift_left_256(&a,1);
+    	        copy(*result, add_256(*result, a));
+				//*result += (a << i);
+    	    }
+    	}
+	}
+}
+
+void bit_shift_left_256(uint8_t** a, int shift)
+{
+	for ( int x  = 1 ; x < 33 ; x++ )
+	{
+		*a[x] = (*a[x] << shift);
+	}
+}
+
+// Prints the contents of the 256 bit number in hex (and in theory bigger numbers)
 void print256(uint8_t* num)
 {
 	uint8_t sign;
@@ -82,17 +136,39 @@ void print256(uint8_t* num)
 	printf("\n");
 }
 
+void print512(uint8_t* num)
+{
+	uint8_t sign;
+	if (num[0]==0x0)
+		sign = '+';
+	else
+		sign = '-';
+	printf("%c0x",sign);
+	for (int x = 1 ; x < 65 ; x++)
+	{
+		printf("%02x",num[x]);
+	}
+	printf("\n");
+}
+
+void copy(uint8_t* a,uint8_t* b)
+{
+	memcpy(&a,&b,sizeof(b));
+}
+
+// DOES NOT WORK IF YOU PUT SAME EXACT INTEGER TWICE
+// MAKE A COPY OF THE VARIABLE WITH THE SAME VALUE AND IT WILL WORK
 uint8_t* add_256(uint8_t* a, uint8_t* b)
 {
 	if (a[0] == 1 && b[0] == 0 )
 	{
 		a[0] = 0;
-		a = subtract_256(a,b);
+		//sum = subtract_256(a,b);
 	}
 	else if (a[0] == 0 && b[0] == 1)
 	{
 		b[0] = 0;
-		a = subtract_256(a,b);
+		//sum = subtract_256(a,b);
 	}
 	else
 	{
@@ -101,10 +177,9 @@ uint8_t* add_256(uint8_t* a, uint8_t* b)
 			if (DEBUG)
 			{
 				printf("index: %i\n",x);
-				printf("contents:\na[%i]:%02x\nb[%i]:%02x\n",x,a[x],x,b[x]);
+				printf("contents:\na[%i]:%i\nb[%i]:%i\n",x,a[x],x,b[x]);
 			}
-
-			//addition loop
+			
 			while (b[x] != 0)
 			{
 				// basic implementation of bitwise addition
@@ -115,17 +190,21 @@ uint8_t* add_256(uint8_t* a, uint8_t* b)
 				//if there is it makes sure it isn't the highest most index before adding 1 to the next
 				//index thus allowing for the addition to properly treat the function just like a 256 bit
 				//number instead of a the botched representation that it is
-				if (((carry >> (uint8_t)7) & 1) == 1)
+				if (((carry >> (uint8_t)7) & 1))
 				{
 					if (x > 1)
 					{
-						a[x-1] += 1;
-					}
+						a[x-1]++;
+					}/*
 					else
 					{
 						a = ZERO;
-					}
+					}*/
 				}
+			} 
+			if (DEBUG)
+			{
+				printf("result: %i\n",a[x]);
 			}
 		}
 	}
@@ -189,37 +268,6 @@ uint8_t* subtract_256(uint8_t* a, uint8_t* b)
 	return a;
 }
 
-uint8_t* multiply_256(uint8_t* a, uint8_t* b)
-{
-	//printf("awdasd\n");
-
-	uint8_t* result;
-	result = (uint8_t*) malloc(33*sizeof(uint8_t));
-
-	
-	for (int x = 0 ; x < 33 ; x++)
-	{
-		result[x] = 0;
-	}
-
-	// set the numbers temporarily to positive even if they are negative to ensure
-	// the addition works and then make the result negative or positive depending
-	// on the input
-
-	a[0] = 0;
-	b[0] = 0;
-	for (int x = 33 ; x < 0 ; x--)
-	{
-		for(int i = 1; i<=b[x] ; i++)
-		{
-			printf("%i\n",b[x]);
-			result = add_256(result,a);
-			print256(result);
-		}
-	}
-	//prinqt256(b);
-	return result;
-}
 /*
 uint8_t* divide_256()
 {
@@ -244,7 +292,7 @@ int greater_than_256(uint8_t* a, uint8_t* b)
 	{
 		if (DEBUG) {printf("first number is positive and the second is positive, running the math\n");}
 
-		for(int i = 1; i < 5 ; i++)	{if (a[i] > b[i]) {return 1;}}
+		for(int i = 1; i < sizeof(a) ; i++)	{if (a[i] > b[i]) {return 1;}}
 		return 0;
 	}
 }
